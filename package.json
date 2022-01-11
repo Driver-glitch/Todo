@@ -10,8 +10,6 @@
   },
    "scripts": {
     "start": "node ./www.js",
-    "build": "grunt dist",
-    "postinstall": "./node_modules/bower/bin/bower install && npm run build",
     "heroku-postbuild": "npm install --prefix client && npm run build --prefix client"
    }
 }
