@@ -1,17 +1,29 @@
+// This is the Web Server
 const express = require("express");
-const app = express();
 const cors = require("cors");
-const pool = require("./server/db");
+const pool = require("./db");
+const server = express();
+
+//process.env.PORT
+//process.env.NODE_ENV => production or undefined
 
 //middleware
-app.use(cors());
-app.use(express.json()); //req.body
+server.use(cors());
+// handle application/json requests
+server.use(express.json());
+
+//server static content
+//npm run build
+const path = require("path");
+server.use(express.static(path.join(__dirname, "build")));
+// app.use(express.static(path.join(__dirname, "client/build"))); //a different way to use express.static
+// app.use(express.static("./client/build")); //a different way to use express.static
 
 //ROUTES//
 
 //create a todo
 
-app.post("/todos", async (req, res) => {
+server.post("/todos", async (req, res) => {
   try {
     const { description } = req.body;
     const newTodo = await pool.query(
@@ -27,7 +39,7 @@ app.post("/todos", async (req, res) => {
 
 //get all todos
 
-app.get("/todos", async (req, res) => {
+server.get("/todos", async (req, res) => {
   try {
     const allTodos = await pool.query("SELECT * FROM todo");
     res.json(allTodos.rows);
@@ -38,7 +50,7 @@ app.get("/todos", async (req, res) => {
 
 //get a todo
 
-app.get("/todos/:id", async (req, res) => {
+server.get("/todos/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const todo = await pool.query("SELECT * FROM todo WHERE todo_id = $1", [
@@ -51,9 +63,24 @@ app.get("/todos/:id", async (req, res) => {
   }
 });
 
+//create a todo
+server.post("/todos", async (req, res) => {
+  try {
+    console.log(req.body);
+    const { description } = req.body;
+    const newTodo = await pool.query(
+      "INSERT INTO todo (description) VALUES ($1) RETURNING *",
+      [description]
+    );
+    res.json(newTodo.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+});
+
 //update a todo
 
-app.put("/todos/:id", async (req, res) => {
+server.put("/todos/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { description } = req.body;
@@ -70,7 +97,7 @@ app.put("/todos/:id", async (req, res) => {
 
 //delete a todo
 
-app.delete("/todos/:id", async (req, res) => {
+server.delete("/todos/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const deleteTodo = await pool.query("DELETE FROM todo WHERE todo_id = $1", [
@@ -82,7 +109,8 @@ app.delete("/todos/:id", async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT || 5000, () => {
-  console.log("server has started on port 5000");
+// connect to the server
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, async () => {
+  console.log(`Server is running on ${PORT}!`);
 });
-  
